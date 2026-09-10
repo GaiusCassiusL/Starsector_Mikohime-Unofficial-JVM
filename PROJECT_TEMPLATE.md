@@ -10,8 +10,6 @@ section.
 | --- | --- |
 | Project name | `Mikohime Unofficial JVM` |
 | Purpose | Allow explicitly enabled agent-provided classes to run without HotSpot semantic bytecode verification |
-| Intended users | Starsector users and mod developers whose installations require trusted Java agents or JVMTI tooling |
-| Project owner | `GaiusCassiusL` |
 | Status | `Linux and Windows builds validated` |
 
 ## 2. Goals and scope
@@ -32,7 +30,6 @@ section.
 - Disabling verification for ordinary classes not supplied through the covered
   agent or JVMTI paths.
 - Changing unrelated HotSpot, JDK, garbage-collector, or JIT behavior.
-- Supporting untrusted Java agents.
 
 ### Constraints
 
@@ -353,11 +350,3 @@ Define:
 | Test results | Project owner | Build-local jtreg reports | Passing |
 | Release artifacts | Project owner | `dist/` locally; GitHub Releases when published | Built locally |
 | Release documentation | Project owner | `README.md` | Build instructions complete |
-
-## 18. Approval
-
-| Role | Name | Date | Approval |
-| --- | --- | --- | --- |
-| Project owner | GaiusCassiusL | Pending | Pending |
-| Technical reviewer | Pending | Pending | Pending |
-| Security reviewer | Pending | Pending | Pending |
