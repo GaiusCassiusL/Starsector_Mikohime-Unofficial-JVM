@@ -144,7 +144,7 @@ export SOURCE_DATE_EPOCH="$source_epoch"
     echo "Diagnostic option was accepted without unlocking." >&2
     exit 1
   fi
-  test -s "$jdk/LICENSE"
+  test -s "$jdk/legal/java.base/LICENSE"
   test -d "$jdk/legal"
 )
 
