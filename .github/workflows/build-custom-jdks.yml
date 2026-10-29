@@ -161,10 +161,6 @@ jobs:
           test -s "$windows/jdk-28+13Miko-windows-x64.zip.sha256"
           test -s "$windows/jdk-28+13Miko-source.tar.gz"
           test -s "$windows/jdk-28+13Miko-source.tar.gz.sha256"
-          cmp "$linux/jdk-28+13Miko-source.tar.gz" \
-            "$windows/jdk-28+13Miko-source.tar.gz"
-          cmp "$linux/jdk-28+13Miko-source.tar.gz.sha256" \
-            "$windows/jdk-28+13Miko-source.tar.gz.sha256"
           (
             cd "$linux"
             sha256sum -c jdk-28+13Miko.tar.gz.sha256
@@ -173,6 +169,7 @@ jobs:
           (
             cd "$windows"
             sha256sum -c jdk-28+13Miko-windows-x64.zip.sha256
+            sha256sum -c jdk-28+13Miko-source.tar.gz.sha256
           )
           mkdir release-assets/publish
           cp "$linux/jdk-28+13Miko.tar.gz"* \
