@@ -10,7 +10,7 @@ section.
 | --- | --- |
 | Project name | `Mikohime Unofficial JVM` |
 | Purpose | Allow explicitly enabled agent-provided classes to run without HotSpot semantic bytecode verification |
-| Status | `Linux and Windows builds validated` |
+| Status | `Linux and Windows builds previously validated; source and licensing checks pending` |
 
 ## 2. Goals and scope
 
@@ -44,7 +44,7 @@ Pin every build to an immutable upstream commit.
 
 | Distribution | Upstream repository | Tag/version | Commit SHA | Architecture | Status |
 | --- | --- | --- | --- | --- | --- |
-| Mikohime Unofficial JVM 28+13 EA | `https://github.com/openjdk/jdk.git` | `jdk-28+13` | `fd9698357bb034c527c9ccdd6888a2abd75c0043` | `x64` | Planned |
+| Mikohime Unofficial JVM 28+13 EA | `https://github.com/openjdk/jdk.git` | `jdk-28+13` | `fd9698357bb034c527c9ccdd6888a2abd75c0043` | `x64` | Existing binaries published; compliance source bundle and CI checks pending |
 
 ## 4. Supported platforms
 
@@ -260,6 +260,8 @@ The archive's top-level directory must be `jdk-28+13Miko`.
 
 - JDK archive
 - SHA-256 checksum
+- Matching complete corresponding source archive and SHA-256 checksum
+- Applicable upstream licenses and third-party notices
 - Release notes
 - License and third-party notices
 - Corresponding source and patch references
@@ -288,10 +290,11 @@ GitHub Releases; release retention follows repository policy.
 
 | Stage | Trigger | Platforms | Required result |
 | --- | --- | --- | --- |
-| Patch validation | Manual release build | Linux and Windows x64 | Patch applies to the pinned commit |
-| Build | Manual release build | Linux and Windows x64 | Native JDK image completes |
-| Test | Each build | Linux and Windows x64 | Targeted jtreg test passes |
-| Package | Successful build and test | Linux and Windows x64 | Archive and SHA-256 sidecar created |
+| Licensing/source validation | Push and pull request | Ubuntu 24.04 | Project license scope, third-party notices, source instructions, and shell syntax pass |
+| Patch validation | Push, pull request, and release tag | Linux and Windows x64 | Patch applies to the pinned commit |
+| Build | Push, pull request, and release tag | Linux and Windows x64 | Native JDK image completes |
+| Test | Each build | Linux and Windows x64 | Targeted jtreg test and diagnostic-option checks pass |
+| Package | Successful build and test | Linux and Windows x64 | Binary and complete source archives plus SHA-256 sidecars created |
 | Release | Maintainer approval | GitHub | Both platform artifacts published |
 
 Define:
@@ -337,6 +340,7 @@ Define:
 - [x] Required project-specific tests pass.
 - [x] Artifacts pass integrity and smoke checks.
 - [ ] Checksums, licenses, notices, and source references are published.
+- [ ] Matching complete corresponding source archives and checksum sidecars are attached to the release.
 - [ ] Installation, usage, security, and rollback documentation is complete.
 - [ ] Release approval is recorded.
 

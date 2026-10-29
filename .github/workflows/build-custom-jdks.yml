@@ -1,0 +1,211 @@
+name: Build custom JDKs
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  licensing:
+    name: Licensing and source checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check license and source-distribution files
+        run: bash scripts/check-licensing.sh
+      - name: Check patch whitespace
+        run: git diff --check
+
+  build-linux:
+    name: Build and test Linux x64 JDK
+    if: github.event_name != 'push' || github.ref_type == 'tag'
+    needs: licensing
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf build-essential cups-common git libasound2-dev libcups2-dev \
+            libfontconfig1-dev libx11-dev libxext-dev libxrandr-dev libxrender-dev \
+            libxt-dev libxtst-dev openjdk-17-jdk-headless unzip zip
+      - name: Install pinned boot JDK and jtreg
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="$RUNNER_TEMP/miko-jdk-tools"
+          mkdir -p "$tools"
+          archive="$tools/openjdk-26_linux-x64_bin.tar.gz"
+          curl -fL -o "$archive" \
+            "https://download.java.net/java/GA/jdk26/c3cc523845074aa0af4f5e1e1ed4151d/35/GPL/openjdk-26_linux-x64_bin.tar.gz"
+          echo "83c78367f8c81257beef72aca4bbbf8e6dac8ca2b3a4546a85879a09e6e4e128  $archive" | sha256sum -c -
+          tar -C "$tools" -xzf "$archive"
+          mv "$tools/jdk-26" "$tools/boot-jdk-26"
+          git clone --depth 1 --branch 'jtreg-8.3+1' \
+            https://github.com/openjdk/jtreg.git "$tools/jtreg-8.3.1"
+          bash "$tools/jtreg-8.3.1/make/build.sh" \
+            --jdk /usr/lib/jvm/java-17-openjdk-amd64
+          {
+            echo "BOOT_JDK=$tools/boot-jdk-26"
+            echo "BOOT_JDK_ARCHIVE=$archive"
+            echo "JTREG_HOME=$tools/jtreg-8.3.1/build/images/jtreg"
+            echo "JTREG_SOURCE=$tools/jtreg-8.3.1"
+            echo "WORK_DIR=$RUNNER_TEMP/miko-jdk-build"
+            echo "DIST_DIR=$GITHUB_WORKSPACE/dist"
+          } >> "$GITHUB_ENV"
+      - name: Build, test, and package
+        run: bash scripts/build-jdk-28-linux.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mikohime-jdk-28-linux-x64
+          path: |
+            dist/jdk-28+13Miko.tar.gz
+            dist/jdk-28+13Miko.tar.gz.sha256
+            dist/jdk-28+13Miko-source.tar.gz
+            dist/jdk-28+13Miko-source.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  build-windows:
+    name: Build and test Windows x64 JDK
+    if: github.event_name != 'push' || github.ref_type == 'tag'
+    needs: licensing
+    runs-on: windows-2022
+    timeout-minutes: 360
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MSYS
+          update: true
+          install: autoconf ca-certificates curl diffutils git make tar unzip zip
+      - name: Install pinned boot JDK and jtreg
+        run: |
+          set -euo pipefail
+          tools=/c/miko-jdk-tools
+          mkdir -p "$tools"
+          archive="$tools/openjdk-26_windows-x64_bin.zip"
+          curl -fL -o "$archive" \
+            "https://download.java.net/java/GA/jdk26/c3cc523845074aa0af4f5e1e1ed4151d/35/GPL/openjdk-26_windows-x64_bin.zip"
+          echo "2dd2d92c9374cd49a120fe9d916732840bf6bb9f0e0cc29794917a3c08b99c5f  $archive" | sha256sum -c -
+          unzip -q "$archive" -d "$tools"
+          mv "$tools/jdk-26" "$tools/boot-jdk-26"
+          git -c core.autocrlf=false clone --depth 1 --branch 'jtreg-8.3+1' \
+            https://github.com/openjdk/jtreg.git "$tools/jtreg-8.3.1"
+          bash "$tools/jtreg-8.3.1/make/build.sh" --jdk "$tools/boot-jdk-26"
+      - name: Build, test, and package
+        env:
+          BOOT_JDK: /c/miko-jdk-tools/boot-jdk-26
+          BOOT_JDK_ARCHIVE: /c/miko-jdk-tools/openjdk-26_windows-x64_bin.zip
+          JTREG_HOME: /c/miko-jdk-tools/jtreg-8.3.1/build/images/jtreg
+          JTREG_SOURCE: /c/miko-jdk-tools/jtreg-8.3.1
+          WORK_DIR: /c/miko-jdk-build
+        run: |
+          export DIST_DIR="$(cygpath -u "$GITHUB_WORKSPACE")/dist"
+          bash scripts/build-jdk-28-windows.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mikohime-jdk-28-windows-x64
+          path: |
+            dist/jdk-28+13Miko-windows-x64.zip
+            dist/jdk-28+13Miko-windows-x64.zip.sha256
+            dist/jdk-28+13Miko-source.tar.gz
+            dist/jdk-28+13Miko-source.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-release:
+    name: Publish early-access release
+    if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: mikohime-jdk-28-linux-x64
+          path: release-assets/linux
+      - uses: actions/download-artifact@v4
+        with:
+          name: mikohime-jdk-28-windows-x64
+          path: release-assets/windows
+      - name: Verify release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          linux=release-assets/linux
+          windows=release-assets/windows
+          test -s "$linux/jdk-28+13Miko.tar.gz"
+          test -s "$linux/jdk-28+13Miko.tar.gz.sha256"
+          test -s "$linux/jdk-28+13Miko-source.tar.gz"
+          test -s "$linux/jdk-28+13Miko-source.tar.gz.sha256"
+          test -s "$windows/jdk-28+13Miko-windows-x64.zip"
+          test -s "$windows/jdk-28+13Miko-windows-x64.zip.sha256"
+          test -s "$windows/jdk-28+13Miko-source.tar.gz"
+          test -s "$windows/jdk-28+13Miko-source.tar.gz.sha256"
+          cmp "$linux/jdk-28+13Miko-source.tar.gz" \
+            "$windows/jdk-28+13Miko-source.tar.gz"
+          cmp "$linux/jdk-28+13Miko-source.tar.gz.sha256" \
+            "$windows/jdk-28+13Miko-source.tar.gz.sha256"
+          (
+            cd "$linux"
+            sha256sum -c jdk-28+13Miko.tar.gz.sha256
+            sha256sum -c jdk-28+13Miko-source.tar.gz.sha256
+          )
+          (
+            cd "$windows"
+            sha256sum -c jdk-28+13Miko-windows-x64.zip.sha256
+          )
+          mkdir release-assets/publish
+          cp "$linux/jdk-28+13Miko.tar.gz"* \
+            "$linux/jdk-28+13Miko-source.tar.gz"* \
+            "$windows/jdk-28+13Miko-windows-x64.zip"* \
+            release-assets/publish/
+      - name: Create GitHub pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          cat > release-notes.md <<'EOF'
+          # Mikohime Unofficial JVM 28+13
+
+          Early-access custom OpenJDK 28 build, pinned to upstream commit
+          `fd9698357bb034c527c9ccdd6888a2abd75c0043`.
+
+          This build adds the default-off diagnostic option
+          `-XX:+AllowUnverifiedAgentClasses`. Enabling it requires
+          `-XX:+UnlockDiagnosticVMOptions` and skips semantic bytecode
+          verification for covered agent-provided classes. Do not enable it
+          with untrusted agents or mods.
+
+          ## Downloads and source
+
+          This release includes Linux and Windows x64 binaries, their SHA-256
+          checksums, and the complete corresponding patched OpenJDK source
+          archive with its checksum. See `README.md`, `SOURCE-DISTRIBUTION.md`,
+          and `THIRD_PARTY_NOTICES.md` in the source archive for build,
+          licensing, and redistribution details. The binary JDKs retain
+          upstream legal notices.
+
+          This is an unofficial early-access build, not endorsed by Oracle or
+          the OpenJDK project.
+          EOF
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --prerelease \
+            --title "Mikohime Unofficial JVM 28+13 ($GITHUB_REF_NAME)" \
+            --notes-file release-notes.md \
+            release-assets/publish/*

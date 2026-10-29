@@ -2,11 +2,12 @@ diff --git a/src/hotspot/share/classfile/classFileParser.cpp b/src/hotspot/share
 index cd4b32d80..170313462 100644
 --- a/src/hotspot/share/classfile/classFileParser.cpp
 +++ b/src/hotspot/share/classfile/classFileParser.cpp
-@@ -5539,7 +5539,8 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik,
+@@ -5539,7 +5539,9 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik,
    assert(ik->size_helper() == _layout_info->_instance_size, "sanity");
 
    // Fill in information already parsed
 -  ik->set_should_verify_class(_need_verify);
++  // Modified by Mikohime Unofficial JVM, 2026.
 +  ik->set_should_verify_class(
 +      _need_verify && !(changed_by_loadhook && AllowUnverifiedAgentClasses));
 
@@ -16,11 +17,12 @@ diff --git a/src/hotspot/share/prims/jvmtiRedefineClasses.cpp b/src/hotspot/shar
 index aea0c6c32..14d7b1693 100644
 --- a/src/hotspot/share/prims/jvmtiRedefineClasses.cpp
 +++ b/src/hotspot/share/prims/jvmtiRedefineClasses.cpp
-@@ -1461,7 +1461,9 @@ jvmtiError VM_RedefineClasses::load_new_class_versions() {
+@@ -1461,7 +1461,10 @@ jvmtiError VM_RedefineClasses::load_new_class_versions() {
        // verifier. Please, refer to jvmtiThreadState.hpp for the detailed
        // description.
        RedefineVerifyMark rvm(the_class, scratch_class, state);
 -      Verifier::verify(scratch_class, true, THREAD);
++      // Modified by Mikohime Unofficial JVM, 2026.
 +      if (!AllowUnverifiedAgentClasses) {
 +        Verifier::verify(scratch_class, true, THREAD);
 +      }
@@ -42,10 +44,11 @@ diff --git a/src/hotspot/share/runtime/globals.hpp b/src/hotspot/share/runtime/g
 index edfcf2e53..a8d24caf7 100644
 --- a/src/hotspot/share/runtime/globals.hpp
 +++ b/src/hotspot/share/runtime/globals.hpp
-@@ -455,6 +455,10 @@ const int ObjectAlignmentInBytes = 8;
+@@ -455,6 +455,11 @@ const int ObjectAlignmentInBytes = 8;
    product(bool, BytecodeVerificationLocal, false, DIAGNOSTIC,               \
            "Enable the Java bytecode verifier for local classes")            \
                                                                              \
++  /* Modified by Mikohime Unofficial JVM, 2026. */                          \
 +  product(bool, AllowUnverifiedAgentClasses, false, DIAGNOSTIC,             \
 +          "Allow agent-provided classes to bypass bytecode "                \
 +          "verification")                                                   \
@@ -57,14 +60,7 @@ diff --git a/test/hotspot/jtreg/runtime/verifier/CFLH/TestVerify.java b/test/hot
 index db094221d..e7fda66a9 100644
 --- a/test/hotspot/jtreg/runtime/verifier/CFLH/TestVerify.java
 +++ b/test/hotspot/jtreg/runtime/verifier/CFLH/TestVerify.java
-@@ -1,5 +1,5 @@
- /*
-- * Copyright (c) 2025, Oracle and/or its affiliates. All rights reserved.
-+ * Copyright (c) 2025, 2026, Oracle and/or its affiliates. All rights reserved.
-  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-  *
-  * This code is free software; you can redistribute it and/or modify it
-@@ -34,10 +34,18 @@
+@@ -34,10 +34,19 @@
   * @compile TestChecker.java
   * @run driver jdk.test.lib.helpers.ClassFileInstaller checker/TestChecker
   * @run main TestVerify buildAgent
@@ -80,6 +76,7 @@ index db094221d..e7fda66a9 100644
 + * @run main/othervm --patch-module=java.base=. -XX:+UnlockDiagnosticVMOptions -XX:+AllowUnverifiedAgentClasses -Dagent.allowUnverified=true -Dagent.operation=ordinary -javaagent:redefineagent.jar TestVerify
 + * @run main/othervm --patch-module=java.base=. -XX:+UnlockDiagnosticVMOptions -XX:+AllowUnverifiedAgentClasses -Dagent.allowUnverified=true -Dagent.malformed=true -Dagent.operation=load -javaagent:redefineagent.jar TestVerify
   */
++// Modified by Mikohime Unofficial JVM, 2026.
 
 +import java.lang.instrument.ClassDefinition;
  import java.lang.invoke.MethodHandles;

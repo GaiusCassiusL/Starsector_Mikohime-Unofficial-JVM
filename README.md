@@ -67,8 +67,9 @@ bash scripts/build-jdk-28-linux.sh
 ```
 
 The script validates the pinned source revision, applies the version-specific
-patch, builds the release image, runs the targeted jtreg test, and creates a
-`dist/jdk-28+13Miko.tar.gz` archive and SHA-256 file. The archive's top-level
+patch, builds the release image, runs the targeted jtreg test, and creates the
+`dist/jdk-28+13Miko.tar.gz` binary archive, its SHA-256 file, and the complete
+corresponding source archive with its checksum. The binary archive's top-level
 directory is also named `jdk-28+13Miko`.
 
 ## Build Java 28+13 on Windows
@@ -121,7 +122,10 @@ bash scripts/build-jdk-28-windows.sh
 ```
 
 The Windows build creates `dist/jdk-28+13Miko-windows-x64.zip` and its
-SHA-256 file. The archive's top-level directory is `jdk-28+13Miko`.
+SHA-256 file. Both platform builds also create
+`dist/jdk-28+13Miko-source.tar.gz` and its SHA-256 file. The source archive
+contains the exact patched OpenJDK source and project build materials. The
+binary archive's top-level directory is `jdk-28+13Miko`.
 
 ## Rebuilding
 
@@ -130,3 +134,28 @@ JDK checksum and jtreg revision, apply the repository patch, run the targeted
 HotSpot regression test, verify diagnostic-option locking, and package the
 result. Build outputs and downloaded source trees are intentionally excluded
 from Git.
+
+GitHub Actions runs the licensing checks and both native platform builds for
+pull requests and release tags. A successful `v*` tag build publishes an
+early-access GitHub pre-release containing both binaries, the matching
+corresponding source archive, and checksums.
+
+## Licensing and redistribution
+
+Original project documentation and build materials are licensed under the MIT
+License in [LICENSE](LICENSE), which permits commercial and non-commercial use,
+modification, and redistribution. That license does not apply to OpenJDK or
+the OpenJDK-derived patch.
+
+The JDK is based on OpenJDK `jdk-28+13`; its source files and bundled
+third-party components remain subject to their own upstream licenses and
+notices. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and the `legal/`
+directory in each built JDK. When redistributing a binary, comply with every
+applicable upstream license and include its notices. For each binary
+distribution, provide the matching `jdk-28+13Miko-source.tar.gz` from the
+same build and its checksum, as described in
+[SOURCE-DISTRIBUTION.md](SOURCE-DISTRIBUTION.md).
+
+This is an unofficial project and is not endorsed by Oracle or OpenJDK. Java
+and OpenJDK are trademarks or registered trademarks of Oracle and/or its
+affiliates.

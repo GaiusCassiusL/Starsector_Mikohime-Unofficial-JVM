@@ -51,7 +51,7 @@ fi
 
 readonly vswhere="/c/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
 readonly vs_path="$(
-  "$vswhere" -latest -products Microsoft.VisualStudio.Product.BuildTools \
+  "$vswhere" -latest -products "*" \
     -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 \
     -property installationPath
 )"
@@ -144,6 +144,8 @@ export SOURCE_DATE_EPOCH="$source_epoch"
     echo "Diagnostic option was accepted without unlocking." >&2
     exit 1
   fi
+  test -s "$jdk/LICENSE"
+  test -d "$jdk/legal"
 )
 
 readonly image_dir="$source_dir/build/$conf_name/images"
@@ -166,4 +168,7 @@ rm -f "$archive"
   sha256sum "$(basename "$archive")" > "$(basename "$archive").sha256"
 )
 
+bash "$repo_root/scripts/package-source.sh" \
+  "$source_dir" "$work_dir" "$dist_dir" "$source_epoch" "$archive" \
+  build-jdk-28-windows.sh
 echo "Created $archive"
