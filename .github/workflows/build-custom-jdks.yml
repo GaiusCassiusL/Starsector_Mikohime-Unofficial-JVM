@@ -90,10 +90,16 @@ jobs:
           msystem: MSYS
           update: true
           install: autoconf ca-certificates curl diffutils git make tar unzip zip
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          architecture: x64
       - name: Install pinned boot JDK and jtreg
         run: |
           set -euo pipefail
           tools=/c/miko-jdk-tools
+          jtreg_jdk="$(cygpath -u "$JAVA_HOME")"
           mkdir -p "$tools"
           archive="$tools/openjdk-26_windows-x64_bin.zip"
           curl -fL -o "$archive" \
@@ -103,7 +109,7 @@ jobs:
           mv "$tools/jdk-26" "$tools/boot-jdk-26"
           git -c core.autocrlf=false clone --depth 1 --branch 'jtreg-8.3+1' \
             https://github.com/openjdk/jtreg.git "$tools/jtreg-8.3.1"
-          bash "$tools/jtreg-8.3.1/make/build.sh" --jdk "$tools/boot-jdk-26"
+          bash "$tools/jtreg-8.3.1/make/build.sh" --jdk "$jtreg_jdk"
       - name: Build, test, and package
         env:
           BOOT_JDK: /c/miko-jdk-tools/boot-jdk-26

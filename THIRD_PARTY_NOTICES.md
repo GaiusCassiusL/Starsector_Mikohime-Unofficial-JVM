@@ -25,9 +25,10 @@ License references:
 
 ## Build-only tools
 
-The build instructions use a boot JDK and jtreg. These are build prerequisites
-and are not included in the custom JDK release archives. They remain subject
-to their own licenses when obtained or redistributed.
+The build instructions use a boot JDK, JDK 17 to build jtreg, and jtreg. These
+are build prerequisites and are not included in the custom JDK release
+archives. They remain subject to their own licenses when obtained or
+redistributed.
 
 ## Trademarks
 

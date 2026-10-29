@@ -146,7 +146,7 @@ Document:
 | Dependency | Required version | Source URL | SHA-256/signature |
 | --- | --- | --- | --- |
 | Boot JDK | OpenJDK `26+35` Linux x64 | `https://download.java.net/java/GA/jdk26/c3cc523845074aa0af4f5e1e1ed4151d/35/GPL/openjdk-26_linux-x64_bin.tar.gz` | `83c78367f8c81257beef72aca4bbbf8e6dac8ca2b3a4546a85879a09e6e4e128` |
-| Test JDK/tool | OpenJDK 17 | Ubuntu 24.04 `openjdk-17-jdk` package | Distribution-managed |
+| Test JDK/tool | JDK 17 for jtreg build | Ubuntu 24.04 `openjdk-17-jdk` / Windows Temurin 17 | Distribution-managed |
 | Test harness | jtreg `8.3+1` | `https://github.com/openjdk/jtreg/tree/jtreg-8.3%2B1` | Git tag |
 
 ### Platform toolchains
