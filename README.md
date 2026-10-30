@@ -7,6 +7,7 @@ design, build process, validation, and release criteria for each custom JDK.
 
 ## Current target
 
+- Planned project release tag: `v1.0.0` (early-access)
 - OpenJDK `jdk-28+13`
 - Commit `fd9698357bb034c527c9ccdd6888a2abd75c0043`
 - Ubuntu 24.04 LTS, Linux x64
@@ -141,9 +142,9 @@ result. Build outputs and downloaded source trees are intentionally excluded
 from Git.
 
 GitHub Actions runs the licensing checks and both native platform builds for
-pull requests and release tags. A successful `v*` tag build publishes an
-early-access GitHub pre-release containing both binaries, the matching
-corresponding source archive, and checksums.
+pull requests and release tags. The planned next project release is `v1.0.0`;
+its `v*` tag build will publish an early-access GitHub pre-release containing
+both binaries, the matching corresponding source archive, and checksums.
 
 ## Licensing and redistribution
 
