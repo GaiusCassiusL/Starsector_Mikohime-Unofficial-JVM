@@ -67,8 +67,9 @@ bash scripts/build-jdk-28-linux.sh
 ```
 
 The script validates the pinned source revision, applies the version-specific
-patch, builds the release image, runs the targeted jtreg test, and creates a
-`dist/jdk-28+13Miko.tar.gz` archive and SHA-256 file. The archive's top-level
+patch, builds the release image, runs the targeted jtreg test, and creates the
+`dist/jdk-28+13Miko.tar.gz` binary archive, its SHA-256 file, and the complete
+corresponding source archive with its checksum. The binary archive's top-level
 directory is also named `jdk-28+13Miko`.
 
 ## Build Java 28+13 on Windows
@@ -93,9 +94,14 @@ pacman -S --needed --noconfirm \
   autoconf ca-certificates curl diffutils git make tar unzip zip
 ```
 
-In the same shell, download the pinned boot JDK and build jtreg:
+Install an x64 JDK 17 (for example, Eclipse Temurin 17) to build the pinned
+jtreg harness; jtreg 8.3+1 cannot be built with JDK 26 because it still
+compiles Java Applet support classes. In the same MSYS2 shell, download the
+pinned boot JDK and build jtreg with the JDK 17 installation path in
+`JTREG_BUILD_JDK` (expressed as an MSYS path):
 
 ```bash
+export JTREG_BUILD_JDK="/c/Program Files/Eclipse Adoptium/jdk-17"
 mkdir -p /c/miko-jdk-tools
 curl -fL -o /c/miko-jdk-tools/openjdk-26_windows-x64_bin.zip \
   "https://download.java.net/java/GA/jdk26/c3cc523845074aa0af4f5e1e1ed4151d/35/GPL/openjdk-26_windows-x64_bin.zip"
@@ -108,7 +114,7 @@ mv /c/miko-jdk-tools/jdk-26 /c/miko-jdk-tools/boot-jdk-26
 git -c core.autocrlf=false clone --branch jtreg-8.3+1 \
   https://github.com/openjdk/jtreg.git /c/miko-jdk-tools/jtreg-8.3.1
 bash /c/miko-jdk-tools/jtreg-8.3.1/make/build.sh \
-  --jdk /c/miko-jdk-tools/boot-jdk-26
+  --jdk "$JTREG_BUILD_JDK"
 ```
 
 Set the build inputs and run the build:
@@ -121,7 +127,10 @@ bash scripts/build-jdk-28-windows.sh
 ```
 
 The Windows build creates `dist/jdk-28+13Miko-windows-x64.zip` and its
-SHA-256 file. The archive's top-level directory is `jdk-28+13Miko`.
+SHA-256 file. Both platform builds also create
+`dist/jdk-28+13Miko-source.tar.gz` and its SHA-256 file. The source archive
+contains the exact patched OpenJDK source and project build materials. The
+binary archive's top-level directory is `jdk-28+13Miko`.
 
 ## Rebuilding
 
@@ -130,3 +139,28 @@ JDK checksum and jtreg revision, apply the repository patch, run the targeted
 HotSpot regression test, verify diagnostic-option locking, and package the
 result. Build outputs and downloaded source trees are intentionally excluded
 from Git.
+
+GitHub Actions runs the licensing checks and both native platform builds for
+pull requests and release tags. A successful `v*` tag build publishes an
+early-access GitHub pre-release containing both binaries, the matching
+corresponding source archive, and checksums.
+
+## Licensing and redistribution
+
+Original project documentation and build materials are licensed under the MIT
+License in [LICENSE](LICENSE), which permits commercial and non-commercial use,
+modification, and redistribution. That license does not apply to OpenJDK or
+the OpenJDK-derived patch.
+
+The JDK is based on OpenJDK `jdk-28+13`; its source files and bundled
+third-party components remain subject to their own upstream licenses and
+notices. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and the `legal/`
+directory in each built JDK. When redistributing a binary, comply with every
+applicable upstream license and include its notices. For each binary
+distribution, provide the matching `jdk-28+13Miko-source.tar.gz` from the
+same build and its checksum, as described in
+[SOURCE-DISTRIBUTION.md](SOURCE-DISTRIBUTION.md).
+
+This is an unofficial project and is not endorsed by Oracle or OpenJDK. Java
+and OpenJDK are trademarks or registered trademarks of Oracle and/or its
+affiliates.

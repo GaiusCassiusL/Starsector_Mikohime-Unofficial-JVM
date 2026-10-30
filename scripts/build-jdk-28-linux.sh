@@ -123,6 +123,8 @@ export SOURCE_DATE_EPOCH="$source_epoch"
     echo "Diagnostic option was accepted without unlocking." >&2
     exit 1
   fi
+  test -s "$jdk/legal/java.base/LICENSE"
+  test -d "$jdk/legal"
 )
 
 readonly image_dir="$source_dir/build/$conf_name/images"
@@ -144,4 +146,7 @@ tar -C "$image_dir" \
   sha256sum "$(basename "$archive")" > "$(basename "$archive").sha256"
 )
 
+bash "$repo_root/scripts/package-source.sh" \
+  "$source_dir" "$work_dir" "$dist_dir" "$source_epoch" "$archive" \
+  build-jdk-28-linux.sh
 echo "Created $archive"
