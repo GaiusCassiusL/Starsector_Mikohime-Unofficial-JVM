@@ -44,7 +44,7 @@ Pin every build to an immutable upstream commit.
 
 | Distribution | Upstream repository | Tag/version | Commit SHA | Architecture | Status |
 | --- | --- | --- | --- | --- | --- |
-| Mikohime Unofficial JVM 28+13 EA | `https://github.com/openjdk/jdk.git` | `jdk-28+13` | `fd9698357bb034c527c9ccdd6888a2abd75c0043` | `x64` | Existing binaries published; compliance source bundle and CI checks pending |
+| Mikohime Unofficial JVM 1.0.0 (28+13 EA) | `https://github.com/openjdk/jdk.git` | `jdk-28+13` | `fd9698357bb034c527c9ccdd6888a2abd75c0043` | `x64` | Planned project release tag `v1.0.0`; Linux and Windows build/test checks pass; tag release pending |
 
 ## 4. Supported platforms
 
